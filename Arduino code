@@ -1,0 +1,59 @@
+int laserPin = 9;         // Pin connected to the laser emitter
+int ldrPin = 0;          // Pin connected to the LDR
+int delayTime = 100;      // Time delay between sending signals
+int threshold = 10;      // Threshold value for light detection
+
+String tword = "Testing code";    // The words to send
+String receivedBinary = "";  // To store received binary data
+String receivedWord = "";    // To store the reconstructed word
+
+// Function to convert character to binary
+String charToBinary(char c) {
+  String binary = "";
+  for (int i = 7; i >= 0; i--) {
+    binary += ((c >> i) & 1) ? '1' : '0';
+  }
+  return binary;
+}
+
+// Function to convert binary to character
+char binaryToChar(String binary) {
+  char c = 0;
+  for (int i = 0; i < 8; i++) {
+    c = (c << 1) | (binary[i] - '0');
+  }
+  return c;
+}
+void setup() {
+  Serial.begin(9600);
+  pinMode(laserPin, OUTPUT);
+  pinMode(ldrPin, INPUT);
+  Serial.println("Sending word: " + tword);
+  for (int i = 0; i < tword.length(); i++) {
+    String binaryChar = charToBinary(tword[i]);
+    Serial.println("Letter: " + String(tword[i]) + " -> Binary: " + binaryChar);
+    // Send each bit via the laser
+    for (int j = 0; j < binaryChar.length(); j++) {
+      if (binaryChar[j] == '1') {
+        digitalWrite(laserPin, HIGH);  // Laser on for 1
+      } else {
+        digitalWrite(laserPin, LOW);   // Laser off for 0
+      }
+      delay(delayTime);
+      //receiving 
+      if (analogRead(ldrPin) < threshold) {
+        receivedBinary += '1';  
+      } else {
+        receivedBinary += '0';
+      }
+    }
+    // Reconstructing
+    char receivedChar = binaryToChar(receivedBinary);
+    receivedWord += receivedChar;
+    receivedBinary = ""; //reset variable
+    Serial.println("Sent");
+  }
+  Serial.println("Received word: " + receivedWord);
+}
+void loop() {
+}
